@@ -17,6 +17,7 @@ import {
 } from "@/lib/trigger/convert-files";
 import { CustomUser } from "@/lib/types";
 import { getExtension, log } from "@/lib/utils";
+import { convertPdfToImageTask } from "@/lib/trigger/convert-pdf-to-image";
 
 export default async function handle(
   req: NextApiRequest,
@@ -84,12 +85,12 @@ export default async function handle(
         include: {
           ...(sort &&
             sort === "lastViewed" && {
-              views: {
-                select: { viewedAt: true },
-                orderBy: { viewedAt: "desc" },
-                take: 1,
-              },
-            }),
+            views: {
+              select: { viewedAt: true },
+              orderBy: { viewedAt: "desc" },
+              take: 1,
+            },
+          }),
           _count: {
             select: { links: true, views: true, versions: true },
           },
@@ -297,15 +298,11 @@ export default async function handle(
 
       // skip triggering convert-pdf-to-image job for "notion" / "excel" documents
       if (type === "pdf") {
-        // trigger document uploaded event to trigger convert-pdf-to-image job
-        await client.sendEvent({
-          id: document.versions[0].id, // unique eventId for the run
-          name: "document.uploaded",
-          payload: {
-            documentVersionId: document.versions[0].id,
-            teamId: teamId,
-            documentId: document.id,
-          },
+        // trigger convert-pdf-to-image task directly
+        await convertPdfToImageTask.trigger({
+          documentVersionId: document.versions[0].id,
+          teamId: teamId,
+          documentId: document.id,
         });
       }
 

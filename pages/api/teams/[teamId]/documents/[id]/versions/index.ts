@@ -9,6 +9,7 @@ import { copyFileToBucketServer } from "@/lib/files/copy-file-to-bucket-server";
 import prisma from "@/lib/prisma";
 import { getTeamWithUsersAndDocument } from "@/lib/team/helper";
 import { convertFilesToPdfTask } from "@/lib/trigger/convert-files";
+import { convertPdfToImageTask } from "@/lib/trigger/convert-pdf-to-image";
 import { CustomUser } from "@/lib/types";
 import { log } from "@/lib/utils";
 
@@ -115,17 +116,13 @@ export default async function handle(
           },
         );
       }
-      // trigger document uploaded event to trigger convert-pdf-to-image job
+      // trigger convert-pdf-to-image task directly
       if (type === "pdf") {
-        await client.sendEvent({
-          id: version.id,
-          name: "document.uploaded",
-          payload: {
-            documentVersionId: version.id,
-            versionNumber: version.versionNumber,
-            documentId: documentId,
-            teamId: teamId,
-          },
+        await convertPdfToImageTask.trigger({
+          documentVersionId: version.id,
+          versionNumber: version.versionNumber,
+          documentId: documentId,
+          teamId: teamId,
         });
       }
 

@@ -5,6 +5,7 @@ import { getFile } from "@/lib/files/get-file";
 
 type ConvertPayload = {
 	documentVersionId: string;
+	versionNumber?: number;
 	teamId: string;
 	documentId: string;
 };
@@ -17,8 +18,8 @@ export const convertPdfToImageTask = task({
 	},
 	run: async (payload: ConvertPayload) => {
 		const { documentVersionId, teamId, documentId } = payload;
-		logger.info("[TASK/convert-pdf-to-image] Payload", payload);
 
+		// 1. get file url from document version
 		const documentVersion = await prisma.documentVersion.findUnique({
 			where: { id: documentVersionId },
 			select: { file: true, storageType: true, numPages: true },
@@ -29,6 +30,7 @@ export const convertPdfToImageTask = task({
 			return;
 		}
 
+		// 2. get signed url from file
 		const signedUrl = await getFile({
 			type: documentVersion.storageType,
 			data: documentVersion.file,
@@ -41,7 +43,9 @@ export const convertPdfToImageTask = task({
 
 		let numPages = documentVersion.numPages;
 
+		// skip if the numPages are already defined
 		if (!numPages || numPages === 1) {
+			// 3. send file to api/convert endpoint in a task and get back number of pages
 			const response = await retry.fetch(
 				`${process.env.NEXT_PUBLIC_BASE_URL}/api/mupdf/get-pages`,
 				{
@@ -60,6 +64,7 @@ export const convertPdfToImageTask = task({
 			numPages = fetchedNumPages;
 		}
 
+		// 4. iterate through pages and upload to blob in a task
 		for (let i = 0; i < numPages; ++i) {
 			const currentPage = i + 1;
 			const response = await retry.fetch(
@@ -84,7 +89,9 @@ export const convertPdfToImageTask = task({
 				return;
 			}
 
-			const { documentPageId } = await response.json();
+			const { documentPageId } = (await response.json()) as {
+				documentPageId: string;
+			};
 			logger.info(`Created document page for page ${currentPage}`, {
 				documentPageId,
 				payload,

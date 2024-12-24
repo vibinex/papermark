@@ -10,6 +10,7 @@ import notion from "@/lib/notion";
 import prisma from "@/lib/prisma";
 import { getTeamWithUsersAndDocument } from "@/lib/team/helper";
 import { convertFilesToPdfTask } from "@/lib/trigger/convert-files";
+import { convertPdfToImageTask } from "@/lib/trigger/convert-pdf-to-image";
 import { CustomUser } from "@/lib/types";
 import { getExtension, log } from "@/lib/utils";
 
@@ -134,15 +135,11 @@ export default async function handle(
 
       // skip triggering convert-pdf-to-image job for "notion" / "excel" documents
       if (type === "pdf") {
-        // trigger document uploaded event to trigger convert-pdf-to-image job
-        await client.sendEvent({
-          id: document.versions[0].id, // unique eventId for the run
-          name: "document.uploaded",
-          payload: {
-            documentVersionId: document.versions[0].id,
-            teamId: teamId,
-            documentId: document.id,
-          },
+        // trigger convert-pdf-to-image task directly
+        await convertPdfToImageTask.trigger({
+          documentVersionId: document.versions[0].id,
+          teamId: teamId,
+          documentId: document.id,
         });
       }
 
