@@ -17,7 +17,7 @@ export const convertPdfToImageTask = task({
 		concurrencyLimit: 10,
 	},
 	run: async (payload: ConvertPayload) => {
-		const { documentVersionId, teamId, documentId } = payload;
+		const { documentVersionId, teamId, documentId, versionNumber } = payload;
 
 		// 1. get file url from document version
 		const documentVersion = await prisma.documentVersion.findUnique({
@@ -102,6 +102,20 @@ export const convertPdfToImageTask = task({
 			where: { id: documentVersionId },
 			data: { numPages, hasPages: true, isPrimary: true },
 		});
+
+		if (versionNumber) {
+			await prisma.documentVersion.updateMany({
+				where: {
+					documentId: documentId,
+					versionNumber: {
+						not: versionNumber,
+					},
+				},
+				data: {
+					isPrimary: false,
+				},
+			});
+		}
 
 		await fetch(
 			`${process.env.NEXTAUTH_URL}/api/revalidate?secret=${process.env.REVALIDATE_TOKEN}&documentId=${documentId}`
