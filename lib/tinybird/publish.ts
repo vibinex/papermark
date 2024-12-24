@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { WEBHOOK_TRIGGERS } from "../webhook/constants";
 
-const tb = new Tinybird({ token: process.env.TINYBIRD_TOKEN! });
+const tb = new Tinybird({ baseUrl: process.env.TINYBIRD_BASEURL, token: process.env.TINYBIRD_TOKEN! });
 
 export const publishPageView = tb.buildIngestEndpoint({
   datasource: "page_views__v3",
