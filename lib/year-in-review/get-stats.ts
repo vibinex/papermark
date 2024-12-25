@@ -55,20 +55,20 @@ export async function getYearInReviewStats(teamId: string) {
         Array<{ documentId: string; documentName: string; viewCount: number }>
       >(Prisma.sql`
       WITH RankedDocuments AS (
-        SELECT 
+        SELECT
           d."id" as "documentId",
           d."name" as "documentName",
           COUNT(v."id") as "viewCount",
           ROW_NUMBER() OVER (ORDER BY COUNT(v."id") DESC) as rn
         FROM "Document" d
         LEFT JOIN "View" v ON v."documentId" = d."id"
-        WHERE 
+        WHERE
           d."teamId" = ${teamId}
-          AND v."viewedAt" >= '2024-01-01' 
+          AND v."viewedAt" >= '2024-01-01'
           AND v."viewedAt" < '2024-12-01'
         GROUP BY d."id", d."name"
       )
-      SELECT 
+      SELECT
         "documentId",
         "documentName",
         "viewCount"
@@ -80,12 +80,12 @@ export async function getYearInReviewStats(teamId: string) {
       // 3. Most active month
       prisma.$queryRaw<Array<{ month: Date; viewCount: number }>>(Prisma.sql`
       WITH MonthlyViews AS (
-        SELECT 
+        SELECT
           DATE_TRUNC('month', "viewedAt") as month,
           COUNT(*) as "viewCount",
           ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) as rn
         FROM "View"
-        WHERE 
+        WHERE
           "teamId" = ${teamId}
           AND "viewedAt" >= '2024-01-01'
           AND "viewedAt" < '2024-12-01'
@@ -126,25 +126,25 @@ export async function getYearInReviewStats(teamId: string) {
     totalViews: teamCounts?._count.views,
     mostViewedDocument: mostViewedDoc[0]
       ? {
-          documentId: mostViewedDoc[0].documentId,
-          documentName: mostViewedDoc[0].documentName,
-          viewCount: mostViewedDoc[0].viewCount,
-        }
+        documentId: mostViewedDoc[0].documentId,
+        documentName: mostViewedDoc[0].documentName,
+        viewCount: mostViewedDoc[0].viewCount,
+      }
       : null,
     mostActiveMonth: mostActiveMonth?.[0]
       ? {
-          month: new Date(mostActiveMonth[0].month).toLocaleString("en-US", {
-            month: "long",
-          }),
-          viewCount: mostActiveMonth[0].viewCount,
-        }
+        month: new Date(mostActiveMonth[0].month).toLocaleString("en-US", {
+          month: "long",
+        }),
+        viewCount: mostActiveMonth[0].viewCount,
+      }
       : null,
     totalDuration: tinybirdData.data[0].total_duration,
     uniqueCountries: uniqueCountries,
   };
 }
 
-const tb = new Tinybird({ token: process.env.TINYBIRD_TOKEN! });
+const tb = new Tinybird({ baseUrl: process.env.TINYBIRD_BASEURL, token: process.env.TINYBIRD_TOKEN! });
 
 // tinybird pipe to get the total view duration for all documents in a team
 export const getTotalDuration = tb.buildPipe({

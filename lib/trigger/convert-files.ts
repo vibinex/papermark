@@ -6,6 +6,7 @@ import { putFileServer } from "@/lib/files/put-file-server";
 import prisma from "@/lib/prisma";
 
 import { getExtensionFromContentType } from "../utils/get-content-type";
+import { convertPdfToImageTask } from "@/lib/trigger/convert-pdf-to-image";
 
 type ConvertPayload = {
   documentId: string;
@@ -156,15 +157,11 @@ export const convertFilesToPdfTask = task({
       },
     });
 
-    // v2: trigger document uploaded event to trigger convert-pdf-to-image job
-    await client.sendEvent({
-      id: payload.documentVersionId, // unique eventId for the run
-      name: "document.uploaded",
-      payload: {
-        documentVersionId: payload.documentVersionId,
-        teamId: payload.teamId,
-        documentId: payload.documentId,
-      },
+    // trigger convert-pdf-to-image task directly
+    await convertPdfToImageTask.trigger({
+      documentVersionId: payload.documentVersionId,
+      teamId: payload.teamId,
+      documentId: payload.documentId,
     });
 
     logger.info("Document converted", {
@@ -337,15 +334,11 @@ export const convertCadToPdfTask = task({
       },
     });
 
-    // v2: trigger document uploaded event to trigger convert-pdf-to-image job
-    await client.sendEvent({
-      id: payload.documentVersionId, // unique eventId for the run
-      name: "document.uploaded",
-      payload: {
-        documentVersionId: payload.documentVersionId,
-        teamId: payload.teamId,
-        documentId: payload.documentId,
-      },
+    // trigger convert-pdf-to-image task directly
+    await convertPdfToImageTask.trigger({
+      documentVersionId: payload.documentVersionId,
+      teamId: payload.teamId,
+      documentId: payload.documentId,
     });
 
     logger.info("Document converted", {
