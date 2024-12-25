@@ -7,7 +7,7 @@ import { getLambdaClient } from "@/lib/files/aws-client";
 import prisma from "@/lib/prisma";
 
 export const config = {
-  maxDuration: 180,
+  maxDuration: 60,
 };
 
 export default async function handle(
@@ -222,7 +222,7 @@ export default async function handle(
             "/",
             doc.document.name,
             doc.document.versions[0].originalFile ??
-              doc.document.versions[0].file,
+            doc.document.versions[0].file,
           ),
         );
 
@@ -241,7 +241,7 @@ export default async function handle(
               folder.path,
               doc.document.name,
               doc.document.versions[0].originalFile ??
-                doc.document.versions[0].file,
+              doc.document.versions[0].file,
             ),
           );
 

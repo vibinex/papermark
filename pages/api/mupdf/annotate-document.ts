@@ -8,22 +8,22 @@ import { hexToRgb, log } from "@/lib/utils";
 
 // This function can run for a maximum of 120 seconds
 export const config = {
-  maxDuration: 180,
+  maxDuration: 60,
 };
 
 interface WatermarkConfig {
   text: string;
   isTiled: boolean;
   position:
-    | "top-left"
-    | "top-center"
-    | "top-right"
-    | "middle-left"
-    | "middle-center"
-    | "middle-right"
-    | "bottom-left"
-    | "bottom-center"
-    | "bottom-right";
+  | "top-left"
+  | "top-center"
+  | "top-right"
+  | "middle-left"
+  | "middle-center"
+  | "middle-right"
+  | "bottom-left"
+  | "bottom-center"
+  | "bottom-right";
   rotation: 0 | 30 | 45 | 90 | 180;
   color: string;
   fontSize: number;

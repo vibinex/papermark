@@ -4,12 +4,13 @@ import { NextRequest } from "next/server";
 export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
+  // Fetch fonts externally to reduce bundle size
   const inter = await fetch(
-    new URL("@/styles/Inter-Regular.ttf", import.meta.url),
+    "https://example.com/path/to/Inter-Regular.ttf"
   ).then((res) => res.arrayBuffer());
 
   const interBold = await fetch(
-    new URL("@/public/_static/Inter-Bold.ttf", import.meta.url),
+    "https://example.com/path/to/Inter-Bold.ttf"
   ).then((res) => res.arrayBuffer());
 
   const year = req.nextUrl.searchParams.get("year") || "2024";
@@ -17,8 +18,10 @@ export async function GET(req: NextRequest) {
     req.nextUrl.searchParams.get("minutesSpentOnDocs") || "1000";
   const uploadedDocuments =
     req.nextUrl.searchParams.get("uploadedDocuments") || "100";
-  const sharedLinks = req.nextUrl.searchParams.get("sharedLinks") || "10";
-  const receivedViews = req.nextUrl.searchParams.get("receivedViews") || "1000";
+  const sharedLinks =
+    req.nextUrl.searchParams.get("sharedLinks") || "10";
+  const receivedViews =
+    req.nextUrl.searchParams.get("receivedViews") || "1000";
 
   return new ImageResponse(
     (
