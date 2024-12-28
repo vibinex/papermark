@@ -1,8 +1,8 @@
-import { useEventRunStatuses } from "@trigger.dev/react";
+import { useDocumentProcessingStatus } from "@/lib/swr/use-document";
 
 import { Progress } from "@/components/ui/progress";
-
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 export default function ProcessStatusBar({
   documentVersionId,
@@ -11,10 +11,27 @@ export default function ProcessStatusBar({
   documentVersionId: string;
   className?: string;
 }) {
-  const { fetchStatus, error, statuses, run } =
-    useEventRunStatuses(documentVersionId);
+  const { status, loading, error } =
+    useDocumentProcessingStatus(documentVersionId);
 
-  if (fetchStatus === "loading") {
+  const [progress, setProgress] = useState<number>(0);
+  const [text, setText] = useState<string>("");
+
+  useEffect(() => {
+    if (status) {
+      const progress = (status.currentPageCount / status.totalPages) * 100;
+      setProgress(progress);
+      if (progress === 100) {
+        setText("Processing complete");
+      } else {
+        setText(
+          `${status.currentPageCount} / ${status.totalPages} pages processed`
+        );
+      }
+    }
+  }, [status]);
+
+  if (loading) {
     return (
       <Progress
         value={0}
@@ -27,32 +44,11 @@ export default function ProcessStatusBar({
     );
   }
 
-  if (fetchStatus === "error") {
+  if (error && error.status === 404) {
     return (
       <Progress
         value={0}
         text={error.message}
-        className={cn(
-          "w-full rounded-none text-[8px] font-semibold",
-          className,
-        )}
-      />
-    );
-  }
-
-  if (run.status === "SUCCESS") {
-    return null;
-  }
-
-  const progress = Number(statuses[0]?.data?.progress) * 100 || 0;
-  const text = String(statuses[0]?.data?.text) || "";
-
-  if (run.status === "FAILURE") {
-    return (
-      <Progress
-        value={progress}
-        text={`Error processing document page ${Number(statuses[0]?.data?.currentPage)}`}
-        error={true}
         className={cn(
           "w-full rounded-none text-[8px] font-semibold",
           className,
