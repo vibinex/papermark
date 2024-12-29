@@ -57,12 +57,18 @@ Here's what you need to run Papermark:
 - PostgreSQL Database
 - Blob storage (currently [AWS S3](https://aws.amazon.com/s3/) or [Vercel Blob](https://vercel.com/storage/blob))
 - [Resend](https://resend.com) (for sending emails)
+- [Trigger](https://trigger.dev) account (for running the workers)
+- [TinyBird](https://tinybird.co) account (for document analytics)
+- [Upstash](upstash.com) account
 
 ### 1. Clone the repository
 
 ```shell
-git clone https://github.com/mfts/papermark.git
+git clone https://github.com/vibinex/papermark.git
 cd papermark
+# Checkout remote branch
+git fetch origin deploy
+git checkout -b deploy origin/deploy
 ```
 
 ### 2. Install npm dependencies
@@ -76,6 +82,13 @@ npm install
 ```shell
 cp .env.example .env
 ```
+- Create a Supabase project and populate the database url in the POSTGRES_PRISMA_URL
+- Create a blob on Vercel and enter the BLOB_READ_WRITE_TOKEN & NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST from it
+- Add your API key from your Resend account in RESEND_API_KEY
+- From your TinyBird project, add the TINYBIRD_BASEURL and TINYBIRD_TOKEN
+- (optional) From your Upstash account, select the QStash option and populate the QSTASH_TOKEN, QSTASH_CURRENT_SIGNING_KEY, & QSTASH_NEXT_SIGNING_KEY variables.
+- From your Tigger.dev account, add the `dev` API key in the TRIGGER_SECRET_KEY variable
+- Add a random string in the INTERNAL_API_KEY variable
 
 ### 4. Initialize the database
 
@@ -83,13 +96,22 @@ cp .env.example .env
 npm run dev:prisma
 ```
 
-### 5. Run the dev server
+### 5. Run the Trigger dev server
+
+Modify the `project` parameter in the `trigger.config.ts` file to match your project ID.
+
+Then run:
+```shell
+npm run trigger:v3:dev
+```
+
+### 6. Run the dev server
 
 ```shell
 npm run dev
 ```
 
-### 6. Open the app in your browser
+### 7. Open the app in your browser
 
 Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
@@ -123,6 +145,59 @@ cd papermark
 ## end: pkgx-specific
 pipenv update tinybird-cli
 ```
+
+## Deploying
+
+### Deploying Papermark
+
+The easiest way to deploy is using vercel. The whole deployment is completely free if you are expecting low volumes.
+
+```shell
+npm install -g vercel
+vercel login
+```
+
+Complete the authentication using your browser.
+
+```shell
+vercel --prod
+```
+This will try to deploy, but the deployment will fail because of the absence of environment variables. You can copy the `.env` file with the following changes:
+
+1. Change the NEXTAUTH_URL, NEXT_PUBLIC_BASE_URL & NEXT_PUBLIC_MARKETING_URL to the static prod URL in the vercel project
+2. For the POSTGRES_PRISMA_URL, make sure that the url you have copied is from the "Prisma" option provided by Supabase.
+3. Replace the TRIGGER_SECRET_KEY with the `prod` API key.
+
+Now run the command again:
+```shell
+vercel --prod
+```
+This should successfully launch papermark - but it will not be fully functional unless you deploy your trigger.dev in production.
+
+### Deploying trigger
+
+First, you will need to copy the following environment variables from the vercel deployment to your trigger.dev project:
+
+1. INTERNAL_API_KEY
+2. NEXTAUTH_URL
+3. NEXT_PUBLIC_BASE_URL
+4. NEXT_PUBLIC_MARKETING_URL
+5. POSTGRES_PRISMA_URL
+6. POSTGRES_PRISMA_URL_NON_POOLING
+
+```shell
+npx trigger.dev@latest deploy
+```
+
+### Getting the paid features for free
+You will get the full experience of Papermark, but to get the paid features, you will need to change some values in your Postgres database.
+
+After you have created an account (signup with email - because we didn't set up Google OAuth env variables), go to your Supabase project and look for the following tables:
+
+1. User
+2. Team
+
+In both these tables, change the 'plan' column value for your user and team from "free" to "business".
 
 ## Contributing
 
